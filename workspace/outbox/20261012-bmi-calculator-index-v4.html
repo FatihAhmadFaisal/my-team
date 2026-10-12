@@ -1,0 +1,1047 @@
+<!-- Catatan serah-terima (v4): Menambahkan fitur dwibahasa (Bahasa Indonesia & English) dengan pengalih instan di header, penerjemahan teks dinamis real-time (termasuk hasil aktif, skala, dan pesan validasi), serta mempertahankan seluruh fitur mode ketik/slider v3; siap langsung dibuka di browser. -->
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kalkulator BMI / BMI Calculator (v4)</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --kurus: #0284c7;
+      --normal: #16a34a;
+      --kelebihan: #ea580c;
+      --obesitas: #dc2626;
+      --error-bg: #fef2f2;
+      --error-text: #991b1b;
+      --error-border: #fecaca;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px 16px;
+    }
+
+    .container {
+      background: var(--card-bg);
+      width: 100%;
+      max-width: 520px;
+      border-radius: 18px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+      border: 1px solid var(--border);
+      padding: 28px 24px;
+    }
+
+    /* Top bar: version badge & language toggle */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .badge-v4 {
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: #eff6ff;
+      color: var(--primary);
+      padding: 3px 10px;
+      border-radius: 9999px;
+      border: 1px solid #bfdbfe;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .lang-switcher {
+      display: flex;
+      background: #f1f5f9;
+      padding: 3px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      gap: 2px;
+    }
+
+    .lang-btn {
+      padding: 4px 12px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .lang-btn.active {
+      background: #ffffff;
+      color: var(--primary);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      font-size: 1.65rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 6px;
+    }
+
+    .header p {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+
+    /* Mode Switcher */
+    .mode-toggle-container {
+      display: flex;
+      background: #f1f5f9;
+      padding: 4px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border);
+    }
+
+    .mode-btn {
+      flex: 1;
+      padding: 9px 12px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+
+    .mode-btn.active {
+      background: #ffffff;
+      color: var(--text-main);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+      color: var(--text-main);
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 12px 48px 12px 14px;
+      font-size: 1rem;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input[type="number"]:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    .unit-badge {
+      position: absolute;
+      right: 14px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    /* Slider Panel */
+    .slider-panel {
+      display: none;
+      background-color: #f8fafc;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      padding: 18px 16px 8px;
+      margin-bottom: 18px;
+      animation: fadeIn 0.25s ease;
+    }
+
+    .slider-item {
+      margin-bottom: 14px;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .slider-val-tag {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--primary);
+      background: #eff6ff;
+      padding: 2px 8px;
+      border-radius: 6px;
+      border: 1px solid #bfdbfe;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 8px;
+      border-radius: 4px;
+      background: #e2e8f0;
+      outline: none;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    .slider-subticks {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Buttons */
+    .button-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    button.btn-action {
+      flex: 1;
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-radius: 10px;
+      cursor: pointer;
+      border: none;
+      transition: background-color 0.2s, transform 0.1s;
+    }
+
+    button.btn-action:active {
+      transform: scale(0.98);
+    }
+
+    .btn-submit {
+      background-color: var(--primary);
+      color: #ffffff;
+    }
+
+    .btn-submit:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-reset {
+      background-color: #f1f5f9;
+      color: #475569;
+    }
+
+    .btn-reset:hover {
+      background-color: #e2e8f0;
+    }
+
+    .alert {
+      display: none;
+      margin-top: 18px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      background-color: var(--error-bg);
+      border: 1px solid var(--error-border);
+      color: var(--error-text);
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    /* Result Section */
+    .result-section {
+      display: none;
+      margin-top: 24px;
+      background-color: #f8fafc;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      padding: 22px 20px;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-header {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .result-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 6px;
+    }
+
+    .bmi-value {
+      font-size: 2.85rem;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 8px;
+    }
+
+    .category-badge {
+      display: inline-block;
+      padding: 6px 18px;
+      border-radius: 9999px;
+      font-weight: 700;
+      font-size: 0.92rem;
+      color: #ffffff;
+      margin-bottom: 10px;
+    }
+
+    .category-desc {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    /* Visual Scale Bar */
+    .scale-card {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .scale-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .scale-wrapper {
+      position: relative;
+      margin: 18px 6px 10px;
+    }
+
+    .scale-bar {
+      display: flex;
+      height: 14px;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .scale-segment {
+      height: 100%;
+    }
+
+    .seg-kurus { flex: 18.5; background-color: var(--kurus); }
+    .seg-normal { flex: 6.4; background-color: var(--normal); }
+    .seg-kelebihan { flex: 5.1; background-color: var(--kelebihan); }
+    .seg-obesitas { flex: 10; background-color: var(--obesitas); }
+
+    .needle {
+      position: absolute;
+      top: -10px;
+      width: 4px;
+      height: 34px;
+      background-color: #0f172a;
+      border-radius: 2px;
+      transform: translateX(-50%);
+      transition: left 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 0 4px rgba(0,0,0,0.4);
+    }
+
+    .needle::before {
+      content: '';
+      position: absolute;
+      top: -5px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 7px solid #0f172a;
+    }
+
+    .scale-ticks {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 14px;
+      font-weight: 600;
+      padding: 0 2px;
+    }
+
+    /* Ideal Weight Box */
+    .ideal-card {
+      margin-top: 18px;
+      padding: 14px 16px;
+      background: #ffffff;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .ideal-header {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 4px;
+    }
+
+    .ideal-range {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--normal);
+      margin-bottom: 4px;
+    }
+
+    .ideal-comparison {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* Reference Table */
+    .reference-table {
+      margin-top: 24px;
+      border-top: 1px solid var(--border);
+      padding-top: 18px;
+    }
+
+    .reference-table h2 {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .ref-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      padding: 6px 8px;
+      border-radius: 6px;
+      margin-bottom: 2px;
+    }
+
+    .ref-item:nth-child(even) {
+      background-color: #f8fafc;
+    }
+
+    .ref-kurus { color: var(--kurus); font-weight: 600; }
+    .ref-normal { color: var(--normal); font-weight: 600; }
+    .ref-kelebihan { color: var(--kelebihan); font-weight: 600; }
+    .ref-obesitas { color: var(--obesitas); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <!-- Baris Atas: Badge Versi & Tombol Pengalih Bahasa -->
+    <div class="top-bar">
+      <span class="badge-v4" id="txtBadge">Versi 4</span>
+      <div class="lang-switcher" role="group" aria-label="Language Selector">
+        <button type="button" id="btnLangId" class="lang-btn active" onclick="setLanguage('id')">Indonesia</button>
+        <button type="button" id="btnLangEn" class="lang-btn" onclick="setLanguage('en')">English</button>
+      </div>
+    </div>
+
+    <header class="header">
+      <h1 id="txtTitle">Kalkulator BMI</h1>
+      <p id="txtSubtitle">Hitung Indeks Massa Tubuh & Rentang Berat Ideal</p>
+    </header>
+
+    <!-- Tombol Pengalih Mode Input -->
+    <div class="mode-toggle-container">
+      <button type="button" id="btnModeKetik" class="mode-btn active" onclick="setMode('ketik')">
+        Ketik Manual
+      </button>
+      <button type="button" id="btnModeSlider" class="mode-btn" onclick="setMode('slider')">
+        Gunakan Slider
+      </button>
+    </div>
+
+    <form id="bmiForm" onsubmit="hitungBMI(event)">
+      <!-- Panel Input Geser (Slider) Tambahan -->
+      <div id="sliderPanel" class="slider-panel">
+        <div class="slider-item">
+          <div class="slider-header">
+            <span id="txtSlideBerat">Geser Berat Badan:</span>
+            <span id="beratSliderBadge" class="slider-val-tag">0 kg</span>
+          </div>
+          <input 
+            type="range" 
+            id="beratSlider" 
+            min="0" 
+            max="200" 
+            step="1" 
+            value="0"
+            oninput="syncFromSlider('berat')"
+          >
+          <div class="slider-subticks">
+            <span>0 kg</span>
+            <span>100 kg</span>
+            <span>200 kg</span>
+          </div>
+        </div>
+
+        <div class="slider-item">
+          <div class="slider-header">
+            <span id="txtSlideTinggi">Geser Tinggi Badan:</span>
+            <span id="tinggiSliderBadge" class="slider-val-tag">0 cm</span>
+          </div>
+          <input 
+            type="range" 
+            id="tinggiSlider" 
+            min="0" 
+            max="300" 
+            step="1" 
+            value="0"
+            oninput="syncFromSlider('tinggi')"
+          >
+          <div class="slider-subticks">
+            <span>0 cm</span>
+            <span>150 cm</span>
+            <span>300 cm</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input Kolom Teks (Ketik Manual) -->
+      <div class="form-group">
+        <label for="beratInput">
+          <span id="txtLabelBerat">Berat Badan</span>
+        </label>
+        <div class="input-wrapper">
+          <input 
+            type="number" 
+            id="beratInput" 
+            placeholder="Contoh: 70" 
+            step="any"
+            autocomplete="off"
+            oninput="syncFromInput('berat')"
+            required
+          >
+          <span class="unit-badge">kg</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="tinggiInput">
+          <span id="txtLabelTinggi">Tinggi Badan</span>
+        </label>
+        <div class="input-wrapper">
+          <input 
+            type="number" 
+            id="tinggiInput" 
+            placeholder="Contoh: 175" 
+            step="any"
+            autocomplete="off"
+            oninput="syncFromInput('tinggi')"
+            required
+          >
+          <span class="unit-badge">cm</span>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button type="submit" id="btnSubmit" class="btn-action btn-submit">Hitung BMI</button>
+        <button type="button" id="btnReset" class="btn-action btn-reset" onclick="resetForm()">Reset</button>
+      </div>
+    </form>
+
+    <div id="errorAlert" class="alert" role="alert"></div>
+
+    <section id="resultSection" class="result-section" aria-live="polite">
+      <div class="result-header">
+        <div id="txtResultTitle" class="result-title">Hasil BMI Anda</div>
+        <div id="bmiValue" class="bmi-value">--</div>
+        <div id="categoryBadge" class="category-badge">--</div>
+        <p id="categoryDesc" class="category-desc"></p>
+      </div>
+
+      <!-- Visual Scale Bar -->
+      <div class="scale-card">
+        <div id="txtScaleTitle" class="scale-label">Skala Visual Indeks Massa Tubuh</div>
+        <div class="scale-wrapper">
+          <div class="scale-bar">
+            <div id="segKurus" class="scale-segment seg-kurus" title="Kurus (< 18.5)"></div>
+            <div id="segNormal" class="scale-segment seg-normal" title="Normal (18.5 - 24.9)"></div>
+            <div id="segKelebihan" class="scale-segment seg-kelebihan" title="Kelebihan (25.0 - 29.9)"></div>
+            <div id="segObesitas" class="scale-segment seg-obesitas" title="Obesitas (>= 30.0)"></div>
+          </div>
+          <div id="scaleNeedle" class="needle" style="left: 0%;"></div>
+        </div>
+        <div class="scale-ticks">
+          <span>0</span>
+          <span>18.5</span>
+          <span>25.0</span>
+          <span>30.0</span>
+          <span>40+</span>
+        </div>
+      </div>
+
+      <!-- Ideal Weight Recommendation -->
+      <div class="ideal-card">
+        <div class="ideal-header">
+          <span id="idealHeaderLabel">Rentang Berat Badan Ideal (Tinggi <span id="idealHeightText">--</span> cm)</span>
+        </div>
+        <div id="idealRangeText" class="ideal-range">-- kg – -- kg</div>
+        <div id="idealComparisonText" class="ideal-comparison">--</div>
+      </div>
+    </section>
+
+    <section class="reference-table">
+      <h2 id="txtRefTitle">Kategori BMI Standar:</h2>
+      <div class="ref-item">
+        <span id="txtRefKurus">Kurus</span>
+        <span class="ref-kurus">&lt; 18.5</span>
+      </div>
+      <div class="ref-item">
+        <span id="txtRefNormal">Normal</span>
+        <span class="ref-normal">18.5 – 24.9</span>
+      </div>
+      <div class="ref-item">
+        <span id="txtRefKelebihan">Kelebihan berat badan</span>
+        <span class="ref-kelebihan">25.0 – 29.9</span>
+      </div>
+      <div class="ref-item">
+        <span id="txtRefObesitas">Obesitas</span>
+        <span class="ref-obesitas">&ge; 30.0</span>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Kamus Dwibahasa / Bilingual Dictionary
+    const i18n = {
+      id: {
+        badge: "Versi 4",
+        pageTitle: "Kalkulator BMI (v4)",
+        title: "Kalkulator BMI",
+        subtitle: "Hitung Indeks Massa Tubuh & Rentang Berat Ideal",
+        modeKetik: "Ketik Manual",
+        modeSlider: "Gunakan Slider",
+        slideBerat: "Geser Berat Badan:",
+        slideTinggi: "Geser Tinggi Badan:",
+        labelBerat: "Berat Badan",
+        labelTinggi: "Tinggi Badan",
+        placeholderBerat: "Contoh: 70",
+        placeholderTinggi: "Contoh: 175",
+        btnHitung: "Hitung BMI",
+        btnReset: "Reset",
+        resTitle: "Hasil BMI Anda",
+        scaleTitle: "Skala Visual Indeks Massa Tubuh",
+        idealHeader: (h) => `Rentang Berat Badan Ideal (Tinggi ${h} cm)`,
+        idealGain: (d) => `Anda disarankan menambah berat badan sekitar ${d} kg untuk mencapai berat badan normal minimum.`,
+        idealLose: (d) => `Anda disarankan menurunkan berat badan sekitar ${d} kg untuk mencapai berat badan normal maksimum.`,
+        idealOk: "Berat badan Anda saat ini sudah berada di dalam rentang ideal yang sehat. Pertahankan!",
+        refTitle: "Kategori BMI Standar:",
+        catKurus: "Kurus",
+        descKurus: "Berat badan Anda berada di bawah rentang normal. Disarankan untuk mencukupi asupan gizi seimbang.",
+        catNormal: "Normal",
+        descNormal: "Selamat! Berat badan Anda berada dalam kategori ideal dan sehat.",
+        catKelebihan: "Kelebihan berat badan",
+        descKelebihan: "Berat badan Anda melebihi batas normal. Disarankan untuk menjaga pola makan dan aktif berolahraga.",
+        catObesitas: "Obesitas",
+        descObesitas: "Berat badan Anda berada dalam kategori obesitas. Disarankan untuk berkonsultasi dengan tenaga kesehatan.",
+        segKurusTitle: "Kurus (< 18.5)",
+        segNormalTitle: "Normal (18.5 - 24.9)",
+        segKelebihanTitle: "Kelebihan (25.0 - 29.9)",
+        segObesitasTitle: "Obesitas (>= 30.0)",
+        errors: {
+          empty: "Silakan masukkan berat badan dan tinggi badan terlebih dahulu.",
+          nan: "Nilai yang dimasukkan harus berupa angka.",
+          positive: "Tinggi dan berat badan harus berupa angka positif lebih dari nol.",
+          tinggiRange: "Tinggi badan tidak wajar. Masukkan nilai antara 50 cm hingga 300 cm.",
+          beratRange: "Berat badan tidak wajar. Masukkan nilai antara 10 kg hingga 500 kg."
+        }
+      },
+      en: {
+        badge: "Version 4",
+        pageTitle: "BMI Calculator (v4)",
+        title: "BMI Calculator",
+        subtitle: "Calculate Body Mass Index & Ideal Weight Range",
+        modeKetik: "Manual Typing",
+        modeSlider: "Use Slider",
+        slideBerat: "Slide Weight:",
+        slideTinggi: "Slide Height:",
+        labelBerat: "Body Weight",
+        labelTinggi: "Body Height",
+        placeholderBerat: "e.g. 70",
+        placeholderTinggi: "e.g. 175",
+        btnHitung: "Calculate BMI",
+        btnReset: "Reset",
+        resTitle: "Your BMI Result",
+        scaleTitle: "Visual Body Mass Index Scale",
+        idealHeader: (h) => `Ideal Healthy Weight Range (Height ${h} cm)`,
+        idealGain: (d) => `You are advised to gain about ${d} kg to reach the minimum normal weight.`,
+        idealLose: (d) => `You are advised to lose about ${d} kg to reach the maximum normal weight.`,
+        idealOk: "Your current body weight is already within the healthy ideal range. Keep it up!",
+        refTitle: "Standard BMI Categories:",
+        catKurus: "Underweight",
+        descKurus: "Your body weight is below the normal range. It is recommended to ensure balanced nutritional intake.",
+        catNormal: "Normal",
+        descNormal: "Congratulations! Your body weight is within the healthy, ideal range.",
+        catKelebihan: "Overweight",
+        descKelebihan: "Your body weight is above normal. It is recommended to maintain a balanced diet and stay physically active.",
+        catObesitas: "Obese",
+        descObesitas: "Your body weight is in the obese category. It is recommended to consult a healthcare professional.",
+        segKurusTitle: "Underweight (< 18.5)",
+        segNormalTitle: "Normal (18.5 - 24.9)",
+        segKelebihanTitle: "Overweight (25.0 - 29.9)",
+        segObesitasTitle: "Obese (>= 30.0)",
+        errors: {
+          empty: "Please enter both weight and height first.",
+          nan: "Entered values must be numbers.",
+          positive: "Height and weight must be positive numbers greater than zero.",
+          tinggiRange: "Unrealistic height. Please enter a value between 50 cm and 300 cm.",
+          beratRange: "Unrealistic weight. Please enter a value between 10 kg and 500 kg."
+        }
+      }
+    };
+
+    // State Variables
+    let currentLang = 'id';
+    let currentMode = 'ketik';
+    let lastErrorCode = null;
+    let lastCalculatedData = null;
+
+    // DOM Elements
+    const txtBadge = document.getElementById('txtBadge');
+    const txtTitle = document.getElementById('txtTitle');
+    const txtSubtitle = document.getElementById('txtSubtitle');
+    const btnModeKetik = document.getElementById('btnModeKetik');
+    const btnModeSlider = document.getElementById('btnModeSlider');
+    const txtSlideBerat = document.getElementById('txtSlideBerat');
+    const txtSlideTinggi = document.getElementById('txtSlideTinggi');
+    const txtLabelBerat = document.getElementById('txtLabelBerat');
+    const txtLabelTinggi = document.getElementById('txtLabelTinggi');
+    const beratInput = document.getElementById('beratInput');
+    const tinggiInput = document.getElementById('tinggiInput');
+    const beratSlider = document.getElementById('beratSlider');
+    const tinggiSlider = document.getElementById('tinggiSlider');
+    const beratSliderBadge = document.getElementById('beratSliderBadge');
+    const tinggiSliderBadge = document.getElementById('tinggiSliderBadge');
+    const sliderPanel = document.getElementById('sliderPanel');
+    const btnSubmit = document.getElementById('btnSubmit');
+    const btnReset = document.getElementById('btnReset');
+    const errorAlert = document.getElementById('errorAlert');
+    const resultSection = document.getElementById('resultSection');
+    const txtResultTitle = document.getElementById('txtResultTitle');
+    const bmiValueEl = document.getElementById('bmiValue');
+    const categoryBadgeEl = document.getElementById('categoryBadge');
+    const categoryDescEl = document.getElementById('categoryDesc');
+    const scaleNeedle = document.getElementById('scaleNeedle');
+    const txtScaleTitle = document.getElementById('txtScaleTitle');
+    const segKurus = document.getElementById('segKurus');
+    const segNormal = document.getElementById('segNormal');
+    const segKelebihan = document.getElementById('segKelebihan');
+    const segObesitas = document.getElementById('segObesitas');
+    const idealHeaderLabel = document.getElementById('idealHeaderLabel');
+    const idealRangeText = document.getElementById('idealRangeText');
+    const idealComparisonText = document.getElementById('idealComparisonText');
+    const txtRefTitle = document.getElementById('txtRefTitle');
+    const txtRefKurus = document.getElementById('txtRefKurus');
+    const txtRefNormal = document.getElementById('txtRefNormal');
+    const txtRefKelebihan = document.getElementById('txtRefKelebihan');
+    const txtRefObesitas = document.getElementById('txtRefObesitas');
+    const btnLangId = document.getElementById('btnLangId');
+    const btnLangEn = document.getElementById('btnLangEn');
+
+    // Pengalih Bahasa (Language Switcher)
+    function setLanguage(lang) {
+      currentLang = lang;
+      document.documentElement.lang = lang;
+      const t = i18n[lang];
+
+      // Perbarui tombol status aktif
+      if (lang === 'id') {
+        btnLangId.classList.add('active');
+        btnLangEn.classList.remove('active');
+      } else {
+        btnLangEn.classList.add('active');
+        btnLangId.classList.remove('active');
+      }
+
+      // Perbarui judul halaman & teks statis
+      document.title = t.pageTitle;
+      txtBadge.textContent = t.badge;
+      txtTitle.textContent = t.title;
+      txtSubtitle.textContent = t.subtitle;
+      btnModeKetik.textContent = t.modeKetik;
+      btnModeSlider.textContent = t.modeSlider;
+      txtSlideBerat.textContent = t.slideBerat;
+      txtSlideTinggi.textContent = t.slideTinggi;
+      txtLabelBerat.textContent = t.labelBerat;
+      txtLabelTinggi.textContent = t.labelTinggi;
+      beratInput.placeholder = t.placeholderBerat;
+      tinggiInput.placeholder = t.placeholderTinggi;
+      btnSubmit.textContent = t.btnHitung;
+      btnReset.textContent = t.btnReset;
+
+      // Hasil & skala visual
+      txtResultTitle.textContent = t.resTitle;
+      txtScaleTitle.textContent = t.scaleTitle;
+      segKurus.title = t.segKurusTitle;
+      segNormal.title = t.segNormalTitle;
+      segKelebihan.title = t.segKelebihanTitle;
+      segObesitas.title = t.segObesitasTitle;
+
+      // Tabel referensi
+      txtRefTitle.textContent = t.refTitle;
+      txtRefKurus.textContent = t.catKurus;
+      txtRefNormal.textContent = t.catNormal;
+      txtRefKelebihan.textContent = t.catKelebihan;
+      txtRefObesitas.textContent = t.catObesitas;
+
+      // Perbarui pesan kesalahan jika saat ini sedang ditampilkan
+      if (lastErrorCode) {
+        showError(lastErrorCode);
+      }
+
+      // Perbarui hasil aktif tanpa perlu klik hitung ulang
+      if (lastCalculatedData && resultSection.style.display === 'block') {
+        renderResult(lastCalculatedData);
+      }
+    }
+
+    // Pengalih Mode Input
+    function setMode(mode) {
+      currentMode = mode;
+      if (mode === 'slider') {
+        sliderPanel.style.display = 'block';
+        btnModeSlider.classList.add('active');
+        btnModeKetik.classList.remove('active');
+      } else {
+        sliderPanel.style.display = 'none';
+        btnModeKetik.classList.add('active');
+        btnModeSlider.classList.remove('active');
+      }
+    }
+
+    // Sinkronisasi Slider -> Input Ketik
+    function syncFromSlider(type) {
+      if (type === 'berat') {
+        const val = beratSlider.value;
+        beratInput.value = val;
+        beratSliderBadge.textContent = val + ' kg';
+      } else if (type === 'tinggi') {
+        const val = tinggiSlider.value;
+        tinggiInput.value = val;
+        tinggiSliderBadge.textContent = val + ' cm';
+      }
+      clearError();
+    }
+
+    // Sinkronisasi Input Ketik -> Slider
+    function syncFromInput(type) {
+      if (type === 'berat') {
+        const val = parseFloat(beratInput.value);
+        if (!isNaN(val) && val >= 0 && val <= 200) {
+          beratSlider.value = val;
+          beratSliderBadge.textContent = val + ' kg';
+        } else {
+          beratSliderBadge.textContent = (beratInput.value || 0) + ' kg';
+        }
+      } else if (type === 'tinggi') {
+        const val = parseFloat(tinggiInput.value);
+        if (!isNaN(val) && val >= 0 && val <= 300) {
+          tinggiSlider.value = val;
+          tinggiSliderBadge.textContent = val + ' cm';
+        } else {
+          tinggiSliderBadge.textContent = (tinggiInput.value || 0) + ' cm';
+        }
+      }
+      clearError();
+    }
+
+    function showError(code) {
+      lastErrorCode = code;
+      const message = i18n[currentLang].errors[code] || code;
+      errorAlert.textContent = message;
+      errorAlert.style.display = 'block';
+      resultSection.style.display = 'none';
+    }
+
+    function clearError() {
+      lastErrorCode = null;
+      errorAlert.textContent = '';
+      errorAlert.style.display = 'none';
+    }
+
+    function hitungBMI(event) {
+      if (event) event.preventDefault();
+      clearError();
+
+      const beratStr = beratInput.value.trim();
+      const tinggiStr = tinggiInput.value.trim();
+
+      if (!beratStr || !tinggiStr) {
+        showError('empty');
+        return;
+      }
+
+      const berat = parseFloat(beratStr);
+      const tinggi = parseFloat(tinggiStr);
+
+      if (isNaN(berat) || isNaN(tinggi)) {
+        showError('nan');
+        return;
+      }
+
+      if (tinggi <= 0 || berat <= 0) {
+        showError('positive');
+        return;
+      }
+
+      if (tinggi < 50 || tinggi > 300) {
+        showError('tinggiRange');
+        return;
+      }
+
+      if (berat < 10 || berat > 500) {
+        showError('beratRange');
+        return;
+      }
+
+      const tinggiMeter = tinggi / 100;
+      const bmi = berat / (tinggiMeter * tinggiMeter);
+
+      lastCalculatedData = {
+        berat: berat,
+        tinggi: tinggi,
+        tinggiMeter: tinggiMeter,
+        bmi: bmi,
+        bmiFormatted: bmi.toFixed(1)
+      };
+
+      renderResult(lastCalculatedData);
+    }
+
+    function renderResult(data) {
+      const t = i18n[currentLang];
+      const bmi = data.bmi;
+      let kategoriText = '';
+      let warna = '';
+      let keteranganText = '';
+
+      if (bmi < 18.5) {
+        kategoriText = t.catKurus;
+        warna = 'var(--kurus)';
+        keteranganText = t.descKurus;
+      } else if (bmi < 25) {
+        kategoriText = t.catNormal;
+        warna = 'var(--normal)';
+        keteranganText = t.descNormal;
+      } else if (bmi < 30) {
+        kategoriText = t.catKelebihan;
+        warna = 'var(--kelebihan)';
+        keteranganText = t.descKelebihan;
+      } else {
+        kategoriText = t.catObesitas;
+        warna = 'var(--obesitas)';
+        keteranganText = t.descObesitas;
+      }
+
+      // Tampilkan Skor BMI & Kategori
+      bmiValueEl.textContent = data.bmiFormatted;
+      bmiValueEl.style.color = warna;
+      categoryBadgeEl.textContent = kategoriText;
+      categoryBadgeEl.style.backgroundColor = warna;
+      categoryDescEl.textContent = keteranganText;
+
+      // Hitung Posisi Jarum Skala Visual
+      let percentage = 0;
+      if (bmi <= 18.5) {
+        percentage = ((bmi - 10) / (18.5 - 10)) * 46.25;
+      } else if (bmi <= 25) {
+        percentage = 46.25 + ((bmi - 18.5) / (25 - 18.5)) * 16.0;
+      } else if (bmi <= 30) {
+        percentage = 62.25 + ((bmi - 25) / (30 - 25)) * 12.75;
+      } else {
+        percentage = 75.0 + ((Math.min(bmi, 40) - 30) / (40 - 30)) * 25.0;
+      }
+      percentage = Math.max(3, Math.min(percentage, 97));
+      scaleNeedle.style.left = percentage + '%';
+
+      // Hitung Rentang Berat Badan Ideal (BMI 18.5 - 24.9)
+      const minIdeal = (18.5 * data.tinggiMeter * data.tinggiMeter).toFixed(1);
+      const maxIdeal = (24.9 * data.tinggiMeter * data.tinggiMeter).toFixed(1);
+
+      idealHeaderLabel.textContent = t.idealHeader(data.tinggi);
+      idealRangeText.textContent = `${minIdeal} kg – ${maxIdeal} kg`;
+
+      if (data.berat < parseFloat(minIdeal)) {
+        const selisih = (parseFloat(minIdeal) - data.berat).toFixed(1);
+        idealComparisonText.textContent = t.idealGain(selisih);
+      } else if (data.berat > parseFloat(maxIdeal)) {
+        const selisih = (data.berat - parseFloat(maxIdeal)).toFixed(1);
+        idealComparisonText.textContent = t.idealLose(selisih);
+      } else {
+        idealComparisonText.textContent = t.idealOk;
+      }
+
+      resultSection.style.display = 'block';
+    }
+
+    function resetForm() {
+      beratInput.value = '';
+      tinggiInput.value = '';
+      beratSlider.value = 0;
+      tinggiSlider.value = 0;
+      beratSliderBadge.textContent = '0 kg';
+      tinggiSliderBadge.textContent = '0 cm';
+      clearError();
+      lastCalculatedData = null;
+      resultSection.style.display = 'none';
+      scaleNeedle.style.left = '0%';
+      beratInput.focus();
+    }
+  </script>
+</body>
+</html>
