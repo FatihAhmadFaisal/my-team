@@ -1,0 +1,611 @@
+<!-- Catatan serah-terima (v2): Menambahkan visualisasi bar skala BMI dinamis dan rekomendasi rentang berat badan ideal berdasarkan tinggi badan; seluruh antarmuka dalam bahasa Indonesia; siap langsung digunakan di browser. -->
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kalkulator BMI (v2)</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --kurus: #0284c7;
+      --normal: #16a34a;
+      --kelebihan: #ea580c;
+      --obesitas: #dc2626;
+      --error-bg: #fef2f2;
+      --error-text: #991b1b;
+      --error-border: #fecaca;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px 16px;
+    }
+
+    .container {
+      background: var(--card-bg);
+      width: 100%;
+      max-width: 520px;
+      border-radius: 18px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+      border: 1px solid var(--border);
+      padding: 32px 28px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .badge-v2 {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: #eff6ff;
+      color: var(--primary);
+      padding: 3px 10px;
+      border-radius: 9999px;
+      margin-bottom: 8px;
+      border: 1px solid #bfdbfe;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .header h1 {
+      font-size: 1.65rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 6px;
+    }
+
+    .header p {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+      color: var(--text-main);
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      padding: 12px 48px 12px 14px;
+      font-size: 1rem;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input[type="number"]:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+
+    .unit-badge {
+      position: absolute;
+      right: 14px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    button {
+      flex: 1;
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-radius: 10px;
+      cursor: pointer;
+      border: none;
+      transition: background-color 0.2s, transform 0.1s;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .btn-submit {
+      background-color: var(--primary);
+      color: #ffffff;
+    }
+
+    .btn-submit:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-reset {
+      background-color: #f1f5f9;
+      color: #475569;
+    }
+
+    .btn-reset:hover {
+      background-color: #e2e8f0;
+    }
+
+    .alert {
+      display: none;
+      margin-top: 18px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      background-color: var(--error-bg);
+      border: 1px solid var(--error-border);
+      color: var(--error-text);
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    /* Result Section */
+    .result-section {
+      display: none;
+      margin-top: 24px;
+      background-color: #f8fafc;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      padding: 22px 20px;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-header {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .result-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 6px;
+    }
+
+    .bmi-value {
+      font-size: 2.85rem;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 8px;
+    }
+
+    .category-badge {
+      display: inline-block;
+      padding: 6px 18px;
+      border-radius: 9999px;
+      font-weight: 700;
+      font-size: 0.92rem;
+      color: #ffffff;
+      margin-bottom: 10px;
+    }
+
+    .category-desc {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    /* Visual Scale Bar */
+    .scale-card {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .scale-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    .scale-wrapper {
+      position: relative;
+      margin: 18px 6px 10px;
+    }
+
+    .scale-bar {
+      display: flex;
+      height: 14px;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .scale-segment {
+      height: 100%;
+      position: relative;
+    }
+
+    .seg-kurus { flex: 18.5; background-color: var(--kurus); }
+    .seg-normal { flex: 6.4; background-color: var(--normal); }
+    .seg-kelebihan { flex: 5.1; background-color: var(--kelebihan); }
+    .seg-obesitas { flex: 10; background-color: var(--obesitas); }
+
+    .needle {
+      position: absolute;
+      top: -10px;
+      width: 4px;
+      height: 34px;
+      background-color: #0f172a;
+      border-radius: 2px;
+      transform: translateX(-50%);
+      transition: left 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 0 4px rgba(0,0,0,0.4);
+    }
+
+    .needle::before {
+      content: '';
+      position: absolute;
+      top: -5px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 7px solid #0f172a;
+    }
+
+    .scale-ticks {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-top: 14px;
+      font-weight: 600;
+      padding: 0 2px;
+    }
+
+    /* Ideal Weight Box */
+    .ideal-card {
+      margin-top: 18px;
+      padding: 14px 16px;
+      background: #ffffff;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .ideal-header {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .ideal-range {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--normal);
+      margin-bottom: 4px;
+    }
+
+    .ideal-comparison {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* Reference Table */
+    .reference-table {
+      margin-top: 24px;
+      border-top: 1px solid var(--border);
+      padding-top: 18px;
+    }
+
+    .reference-table h2 {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .ref-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      padding: 6px 8px;
+      border-radius: 6px;
+      margin-bottom: 2px;
+    }
+
+    .ref-item:nth-child(even) {
+      background-color: #f8fafc;
+    }
+
+    .ref-kurus { color: var(--kurus); font-weight: 600; }
+    .ref-normal { color: var(--normal); font-weight: 600; }
+    .ref-kelebihan { color: var(--kelebihan); font-weight: 600; }
+    .ref-obesitas { color: var(--obesitas); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <header class="header">
+      <span class="badge-v2">Versi 2</span>
+      <h1>Kalkulator BMI</h1>
+      <p>Hitung Indeks Massa Tubuh & Rentang Berat Ideal</p>
+    </header>
+
+    <form id="bmiForm" onsubmit="hitungBMI(event)">
+      <div class="form-group">
+        <label for="beratInput">Berat Badan</label>
+        <div class="input-wrapper">
+          <input 
+            type="number" 
+            id="beratInput" 
+            placeholder="Contoh: 70" 
+            step="any"
+            autocomplete="off"
+            required
+          >
+          <span class="unit-badge">kg</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="tinggiInput">Tinggi Badan</label>
+        <div class="input-wrapper">
+          <input 
+            type="number" 
+            id="tinggiInput" 
+            placeholder="Contoh: 175" 
+            step="any"
+            autocomplete="off"
+            required
+          >
+          <span class="unit-badge">cm</span>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button type="submit" class="btn-submit">Hitung BMI</button>
+        <button type="button" class="btn-reset" onclick="resetForm()">Reset</button>
+      </div>
+    </form>
+
+    <div id="errorAlert" class="alert" role="alert"></div>
+
+    <section id="resultSection" class="result-section" aria-live="polite">
+      <div class="result-header">
+        <div class="result-title">Hasil BMI Anda</div>
+        <div id="bmiValue" class="bmi-value">--</div>
+        <div id="categoryBadge" class="category-badge">--</div>
+        <p id="categoryDesc" class="category-desc"></p>
+      </div>
+
+      <!-- Visual Scale Bar -->
+      <div class="scale-card">
+        <div class="scale-label">Skala Visual Indeks Massa Tubuh</div>
+        <div class="scale-wrapper">
+          <div class="scale-bar">
+            <div class="scale-segment seg-kurus" title="Kurus (&lt; 18.5)"></div>
+            <div class="scale-segment seg-normal" title="Normal (18.5 - 24.9)"></div>
+            <div class="scale-segment seg-kelebihan" title="Kelebihan (25.0 - 29.9)"></div>
+            <div class="scale-segment seg-obesitas" title="Obesitas (&ge; 30.0)"></div>
+          </div>
+          <div id="scaleNeedle" class="needle" style="left: 0%;"></div>
+        </div>
+        <div class="scale-ticks">
+          <span>0</span>
+          <span>18.5</span>
+          <span>25.0</span>
+          <span>30.0</span>
+          <span>40+</span>
+        </div>
+      </div>
+
+      <!-- Ideal Weight Recommendation -->
+      <div class="ideal-card">
+        <div class="ideal-header">
+          <span>Rentang Berat Badan Ideal (Tinggi <span id="idealHeightText">--</span> cm)</span>
+        </div>
+        <div id="idealRangeText" class="ideal-range">-- kg – -- kg</div>
+        <div id="idealComparisonText" class="ideal-comparison">--</div>
+      </div>
+    </section>
+
+    <section class="reference-table">
+      <h2>Kategori BMI Standar:</h2>
+      <div class="ref-item">
+        <span>Kurus</span>
+        <span class="ref-kurus">&lt; 18.5</span>
+      </div>
+      <div class="ref-item">
+        <span>Normal</span>
+        <span class="ref-normal">18.5 – 24.9</span>
+      </div>
+      <div class="ref-item">
+        <span>Kelebihan berat badan</span>
+        <span class="ref-kelebihan">25.0 – 29.9</span>
+      </div>
+      <div class="ref-item">
+        <span>Obesitas</span>
+        <span class="ref-obesitas">&ge; 30.0</span>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const beratInput = document.getElementById('beratInput');
+    const tinggiInput = document.getElementById('tinggiInput');
+    const errorAlert = document.getElementById('errorAlert');
+    const resultSection = document.getElementById('resultSection');
+    const bmiValueEl = document.getElementById('bmiValue');
+    const categoryBadgeEl = document.getElementById('categoryBadge');
+    const categoryDescEl = document.getElementById('categoryDesc');
+    const scaleNeedle = document.getElementById('scaleNeedle');
+    const idealHeightText = document.getElementById('idealHeightText');
+    const idealRangeText = document.getElementById('idealRangeText');
+    const idealComparisonText = document.getElementById('idealComparisonText');
+
+    function showError(message) {
+      errorAlert.textContent = message;
+      errorAlert.style.display = 'block';
+      resultSection.style.display = 'none';
+    }
+
+    function clearError() {
+      errorAlert.textContent = '';
+      errorAlert.style.display = 'none';
+    }
+
+    function hitungBMI(event) {
+      if (event) event.preventDefault();
+      clearError();
+
+      const beratStr = beratInput.value.trim();
+      const tinggiStr = tinggiInput.value.trim();
+
+      if (!beratStr || !tinggiStr) {
+        showError('Silakan masukkan berat badan dan tinggi badan terlebih dahulu.');
+        return;
+      }
+
+      const berat = parseFloat(beratStr);
+      const tinggi = parseFloat(tinggiStr);
+
+      if (isNaN(berat) || isNaN(tinggi)) {
+        showError('Nilai yang dimasukkan harus berupa angka.');
+        return;
+      }
+
+      if (tinggi <= 0 || berat <= 0) {
+        showError('Tinggi dan berat badan harus berupa angka positif lebih dari nol.');
+        return;
+      }
+
+      if (tinggi < 50 || tinggi > 300) {
+        showError('Tinggi badan tidak wajar. Masukkan nilai antara 50 cm hingga 300 cm.');
+        return;
+      }
+
+      if (berat < 10 || berat > 500) {
+        showError('Berat badan tidak wajar. Masukkan nilai antara 10 kg hingga 500 kg.');
+        return;
+      }
+
+      // Rumus: BMI = berat (kg) / tinggi (m)²
+      const tinggiMeter = tinggi / 100;
+      const bmi = berat / (tinggiMeter * tinggiMeter);
+      const bmiFormatted = bmi.toFixed(1);
+
+      let kategori = '';
+      let warna = '';
+      let keterangan = '';
+
+      if (bmi < 18.5) {
+        kategori = 'Kurus';
+        warna = 'var(--kurus)';
+        keterangan = 'Berat badan Anda berada di bawah rentang normal. Disarankan untuk mencukupi asupan gizi seimbang.';
+      } else if (bmi < 25) {
+        kategori = 'Normal';
+        warna = 'var(--normal)';
+        keterangan = 'Selamat! Berat badan Anda berada dalam kategori ideal dan sehat.';
+      } else if (bmi < 30) {
+        kategori = 'Kelebihan berat badan';
+        warna = 'var(--kelebihan)';
+        keterangan = 'Berat badan Anda melebihi batas normal. Disarankan untuk menjaga pola makan dan aktif berolahraga.';
+      } else {
+        kategori = 'Obesitas';
+        warna = 'var(--obesitas)';
+        keterangan = 'Berat badan Anda berada dalam kategori obesitas. Disarankan untuk berkonsultasi dengan tenaga kesehatan.';
+      }
+
+      // Tampilkan Nilai BMI & Kategori
+      bmiValueEl.textContent = bmiFormatted;
+      bmiValueEl.style.color = warna;
+      categoryBadgeEl.textContent = kategori;
+      categoryBadgeEl.style.backgroundColor = warna;
+      categoryDescEl.textContent = keterangan;
+
+      // Hitung Posisi Jarum Skala Visual (Skala representasi: 10 s.d. 40 BMI = 0% s.d. 100%)
+      let percentage = 0;
+      if (bmi <= 18.5) {
+        percentage = ((bmi - 10) / (18.5 - 10)) * 46.25;
+      } else if (bmi <= 25) {
+        percentage = 46.25 + ((bmi - 18.5) / (25 - 18.5)) * 16.0;
+      } else if (bmi <= 30) {
+        percentage = 62.25 + ((bmi - 25) / (30 - 25)) * 12.75;
+      } else {
+        percentage = 75.0 + ((Math.min(bmi, 40) - 30) / (40 - 30)) * 25.0;
+      }
+      percentage = Math.max(3, Math.min(percentage, 97));
+      scaleNeedle.style.left = percentage + '%';
+
+      // Hitung Rentang Berat Badan Ideal (BMI 18.5 - 24.9)
+      const minIdeal = (18.5 * tinggiMeter * tinggiMeter).toFixed(1);
+      const maxIdeal = (24.9 * tinggiMeter * tinggiMeter).toFixed(1);
+
+      idealHeightText.textContent = tinggi;
+      idealRangeText.textContent = `${minIdeal} kg – ${maxIdeal} kg`;
+
+      if (berat < parseFloat(minIdeal)) {
+        const selisih = (parseFloat(minIdeal) - berat).toFixed(1);
+        idealComparisonText.textContent = `Anda disarankan menambah berat badan sekitar ${selisih} kg untuk mencapai berat badan normal minimum.`;
+      } else if (berat > parseFloat(maxIdeal)) {
+        const selisih = (berat - parseFloat(maxIdeal)).toFixed(1);
+        idealComparisonText.textContent = `Anda disarankan menurunkan berat badan sekitar ${selisih} kg untuk mencapai berat badan normal maksimum.`;
+      } else {
+        idealComparisonText.textContent = `Berat badan Anda saat ini sudah berada di dalam rentang ideal yang sehat. Pertahankan!`;
+      }
+
+      resultSection.style.display = 'block';
+    }
+
+    function resetForm() {
+      beratInput.value = '';
+      tinggiInput.value = '';
+      clearError();
+      resultSection.style.display = 'none';
+      scaleNeedle.style.left = '0%';
+      beratInput.focus();
+    }
+  </script>
+</body>
+</html>

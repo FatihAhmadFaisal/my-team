@@ -1,0 +1,5 @@
+# OS / editor junk (team files are all tracked)
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.lnk
